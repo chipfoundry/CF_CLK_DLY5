@@ -1,0 +1,1790 @@
+/*********************************************************
+*   FEB 1, 2008 ORIGINAL ISSUE
+*   REV 1.1  2/16/08 library name change: CF_CLK_DLY5 -> CF_CLK_DLY5_ff_1.95v_-40C
+*   REV 1.2  3/21/08 commented out cell_leakage_power : 100, area : 1.00
+*   REV 2.0  4/10/08 CDT22357 fix
+*                    (1) area, (2) leakages, (3) add internal power to clock input, (4) analog pin comment, (5) input cap, (6) max cap, (7) min cap
+*   REV 2.1 11/03/08 updated max_trans and max_cap values
+*   REV 2.2  1/12/09 CDT34926 fix (1) add sleep control signal
+*                    CDT35812 fix (2) internal & leakage power update
+*   REV 2.3 11/14/09 AIP error fix 
+*
+*   CORNER INFO:  FF 1.95V -40C
+*********************************************************/
+
+library (CF_CLK_DLY5_ff_1.95v_-40C) {
+   technology (cmos);
+   delay_model : table_lookup;
+   voltage_unit : "1V";
+   current_unit : "1mA";
+   leakage_power_unit : "1nW";
+   default_inout_pin_cap : 0.0;
+   default_input_pin_cap : 0.0;
+   default_output_pin_cap : 0.0;
+   default_fanout_load : 0.0;
+   default_cell_leakage_power : 0.0;
+   default_leakage_power_density : 0.0;
+   capacitive_load_unit (1,pf);
+   bus_naming_style : "%s[%d]";
+   pulling_resistance_unit : "1kohm";
+   input_threshold_pct_rise : 50.0;
+   input_threshold_pct_fall : 50.0;
+   output_threshold_pct_rise : 50.0;
+   output_threshold_pct_fall : 50.0;
+   slew_lower_threshold_pct_fall : 20.0;
+   slew_lower_threshold_pct_rise : 20.0;
+   slew_upper_threshold_pct_fall : 80.0;
+   slew_upper_threshold_pct_rise : 80.0;
+   time_unit : "1ns";
+   voltage_map(vpwr, 1.95);
+   voltage_map(vpwri, 1.95);
+   voltage_map(vgnd, 0.0);
+   voltage_map(vpb, 1.95);
+   voltage_map(vnb, 0.0);
+
+   library_features (report_delay_calculation);
+
+   nom_process : 1.0;
+   nom_temperature : -40.0;
+   nom_voltage : 1.95;
+
+   operating_conditions (min) {
+      process : 1.0;
+ 	  temperature : -40.0;
+	  voltage : 1.95;
+	  tree_type : best_case_tree;
+   }
+
+   default_operating_conditions : min;
+
+   type (BUSA_4_0) {
+     base_type   : array;
+     data_type   : bit;
+     bit_width   : 5;
+     bit_from    : 4;
+     bit_to      : 0;
+     downto      : true;
+   }
+
+   type (BUSA_3_0) {
+     base_type  : array;
+     data_type   : bit;
+     bit_width   : 4;
+     bit_from    : 3;
+     bit_to      : 0;
+     downto      : true;
+   }
+
+   lu_table_template (clk_delay_3x4) { 
+      variable_1 : input_net_transition; 
+      variable_2 : total_output_net_capacitance; 
+      index_1 ("0.01, 1.00, 1.50");
+      index_2 ("0.010, 0.100, 0.250, 0.500");
+   }
+
+   lu_table_template(clk_transition_1x4) { 
+      variable_1 : total_output_net_capacitance; 
+      index_1 ("0.010, 0.100, 0.250, 0.500");
+   }
+
+   power_lut_template(clk_energy_1x5) {
+      variable_1 : input_transition_time;
+	  index_1 ("0.0100, 0.3000, 0.5000, 1.0000, 1.5000");
+   }
+
+   /* CF_CLK_DLY5 */
+
+   cell (CF_CLK_DLY5) {
+
+	  leakage_power() {  /* leakage power when pd enable */
+	     when : "pd";
+		 value : 8.88186;  /* leak.cor, 1.95V, 100C */
+		 related_pg_pin : vpwr;
+	  }
+
+	  leakage_power() {  /* pd & sleep disable */
+	     when : "(pd' * sleep')";
+		 value : 30377;  
+		 related_pg_pin : vpwr;
+	  }
+
+	  leakage_power() {  
+	     when : "(pd' * sleep)";
+		 value : 6.825;  
+		 related_pg_pin : vpwr;
+	  }
+
+      cell_leakage_power :  8.88186;
+
+      area : 15934.00; 
+
+      interface_timing : true;
+
+      pg_pin(vpwr) { 
+         voltage_name : vpwr;  
+         pg_type : primary_power;  
+      } 
+
+      pg_pin(vpwri) { 
+         voltage_name : vpwri;  
+         pg_type : internal_power;  
+      } 
+
+      pg_pin(vpb) { 
+         voltage_name : vpb;  
+         pg_type : primary_power;  
+      } 
+
+      pg_pin(vnb) { 
+         voltage_name : vnb;  
+         pg_type : primary_ground;  
+      } 
+
+      pg_pin(vgnd) { 
+         voltage_name : vgnd;  
+         pg_type : primary_ground;  
+      }
+
+      bus(trim) { 
+         bus_type : "BUSA_4_0"; 
+         direction : input;
+	     related_power_pin : vpwri;
+	     related_ground_pin : vgnd;
+		 pin(trim[4]) {
+            max_transition : 5.000;
+            capacitance : 0.1310;
+		 }
+		 pin(trim[3]) {
+            max_transition : 5.000;
+		    capacitance : 0.0690;
+		 }
+		 pin(trim[2]) {
+            max_transition : 5.000;
+		    capacitance : 0.0378;
+		 }
+		 pin(trim[1]) {
+            max_transition : 5.000;
+		    capacitance : 0.0222;
+		 }
+		 pin(trim[0]) {
+            max_transition : 5.000;
+		    capacitance : 0.0127;
+		 }
+      } 
+
+      pin(pd) { 
+         direction : input; 
+         capacitance : 1.342;   
+         max_transition : 5.000;
+		 related_power_pin : vpwr;
+		 related_ground_pin : vgnd;
+      } 
+
+      pin(sleep) { 
+         direction : input; 
+         capacitance : 0.113;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      } 
+
+      pin(isel) { 
+         direction : input; 
+         capacitance : 0.0212;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      } 
+
+      pin(iref) { /* analog pin - bandgap ref current */ 
+         direction : input; 
+         capacitance : 0.0163;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      } 
+
+      pin(ctrim1) { 
+         direction : input; 
+         capacitance : 0.0102;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      } 
+
+      pin(ctrim0) { 
+         direction : input; 
+         capacitance : 0.0106;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      } 
+
+      pin(clkmode) { 
+         direction : input; 
+         capacitance : 0.0232;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      }
+
+      pin(reset) { 
+         direction : input; 
+         capacitance : 0.0080;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      }
+
+      pin(clksel) { 
+         direction : input; 
+         capacitance : 0.0107;   
+         max_transition : 5.000;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+      }
+
+      bus(SEL4) { 
+      bus_type : "BUSA_3_0"; 
+         direction : input; 
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+		 pin(SEL4[3]) {
+            max_transition : 5.000;
+            capacitance : 0.0235;
+		 }
+		 pin(SEL4[2]) {
+            max_transition : 5.000;
+            capacitance : 0.0264;
+		 }
+		 pin(SEL4[1]) {
+            max_transition : 5.000;
+            capacitance : 0.0308;
+		 }
+		 pin(SEL4[0]) {
+            max_transition : 5.000;
+            capacitance : 0.0305;
+		 }
+      } 
+
+      bus(SEL3) { 
+      bus_type : "BUSA_3_0"; 
+         direction : input; 
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+		 pin(SEL3[3]) {
+            max_transition : 5.000;
+            capacitance : 0.0235;
+		 }
+		 pin(SEL3[2]) {
+            max_transition : 5.000;
+            capacitance : 0.0264;
+		 }
+		 pin(SEL3[1]) {
+            max_transition : 5.000;
+            capacitance : 0.0308;
+		 }
+		 pin(SEL3[0]) {
+            max_transition : 5.000;
+            capacitance : 0.0305;
+		 }
+      } 
+
+      bus(SEL2) { 
+      bus_type : "BUSA_3_0"; 
+         direction : input; 
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+		 pin(SEL2[3]) {
+            max_transition : 5.000;
+            capacitance : 0.0235;
+		 }
+		 pin(SEL2[2]) {
+            max_transition : 5.000;
+            capacitance : 0.0264;
+		 }
+		 pin(SEL2[1]) {
+            max_transition : 5.000;
+            capacitance : 0.0308;
+		 }
+		 pin(SEL2[0]) {
+            max_transition : 5.000;
+            capacitance : 0.0305;
+		 }
+      } 
+
+      bus(SEL1) { 
+      bus_type : "BUSA_3_0"; 
+         direction : input; 
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+		 pin(SEL1[3]) {
+            max_transition : 5.000;
+            capacitance : 0.0235;
+		 }
+		 pin(SEL1[2]) {
+            max_transition : 5.000;
+            capacitance : 0.0264;
+		 }
+		 pin(SEL1[1]) {
+            max_transition : 5.000;
+            capacitance : 0.0308;
+		 }
+		 pin(SEL1[0]) {
+            max_transition : 5.000;
+            capacitance : 0.0305;
+		 }
+      } 
+
+      bus(SEL0) { 
+      bus_type : "BUSA_3_0"; 
+         direction : input; 
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+		 pin(SEL0[3]) {
+            max_transition : 5.000;
+            capacitance : 0.0235;
+		 }
+		 pin(SEL0[2]) {
+            max_transition : 5.000;
+            capacitance : 0.0264;
+		 }
+		 pin(SEL0[1]) {
+            max_transition : 5.000;
+            capacitance : 0.0308;
+		 }
+		 pin(SEL0[0]) {
+            max_transition : 5.000;
+            capacitance : 0.0305;
+		 }
+      } 
+
+      pin(clkin) {  /* clock input */
+         direction : input; 
+         capacitance : 0.0445;
+         max_transition : 1.350;
+		 related_power_pin : vpwri;
+		 related_ground_pin : vgnd;
+		 clock : true;
+		 min_pulse_width_high : 4.0000;
+		 min_pulse_width_low : 4.0000;
+		 min_period : 10.0000;
+
+		 internal_power() {
+            when : "(pd' * sleep')";
+			rise_power(clk_energy_1x5) {
+               index_1 ("0.0100, 0.3000, 0.5000, 1.0000, 1.5000");
+			   values (\
+			           "7.9593, 7.9593, 7.9593, 7.9593, 7.9593" \
+			   )
+			}
+			fall_power(clk_energy_1x5) {
+               index_1 ("0.0100, 0.3000, 0.5000, 1.0000, 1.5000");
+			   values (\
+			           "7.9593, 7.9593, 7.9593, 7.9593, 7.9593" \
+			   )
+			}
+		 }
+
+		 internal_power() {
+            when : "(pd' * sleep)";
+			rise_power(clk_energy_1x5) {
+               index_1 ("0.0100, 0.3000, 0.5000, 1.0000, 1.5000");
+			   values (\
+			           "0.3837, 0.3837, 0.3837, 0.3837, 0.3837" \
+			   )
+			}
+			fall_power(clk_energy_1x5) {
+               index_1 ("0.0100, 0.3000, 0.5000, 1.0000, 1.5000");
+			   values (\
+			           "0.3837, 0.3837, 0.3837, 0.3837, 0.3837" \
+			   )
+			}
+		 }
+      } 
+
+      bus (clk) {
+      bus_type : BUSA_4_0;
+         pin(clk[4]) {
+            direction : output; 
+            max_transition : 5;
+            max_capacitance : 0.450;
+		    related_power_pin : vpwri;
+		    related_ground_pin : vgnd;
+            timing() { /* SEL4[3:0]=01h -> TAP0 */
+			   when : "(SEL4[3]' * SEL4[2]' * SEL4[1]' * SEL4[0])"; 
+               sdf_cond : "(~SEL4[3] * ~SEL4[2] * ~SEL4[1] * SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "2.390, 2.460, 2.574, 2.763 ",\
+					 "2.433, 2.500, 2.613, 2.803 ",\
+					 "2.438, 2.505, 2.618, 2.808 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "2.163, 2.263, 2.398, 2.614 ",\
+					 "2.337, 2.434, 2.573, 2.790 ",\
+					 "2.388, 2.492, 2.628, 2.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=02h -> TAP1 */
+			   when : "(SEL4[3]' * SEL4[2]' * SEL4[1] * SEL4[0]')"; 
+               sdf_cond : "(~SEL4[3] * ~SEL4[2] * SEL4[1] * ~SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "3.191, 3.273, 3.387, 3.577 ",\
+					 "3.228, 3.312, 3.423, 3.611 ",\
+					 "3.233, 3.317, 3.428, 3.616 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.195, 3.303, 3.441, 3.661 ",\
+					 "3.366, 3.468, 3.607, 3.836 ",\
+					 "3.419, 3.530, 3.671, 3.890 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=03h -> TAP2 */
+			   when : "(SEL4[3]' * SEL4[2]' * SEL4[1] * SEL4[0])"; 
+               sdf_cond : "(~SEL4[3] * ~SEL4[2] * SEL4[1] * SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "4.320, 4.393, 4.513, 4.711 ",\
+					 "4.350, 4.428, 4.546, 4.742 ",\
+					 "4.358, 4.433, 4.551, 4.747 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.975, 4.078, 4.225, 4.443 ",\
+					 "4.151, 4.254, 4.394, 4.617 ",\
+					 "4.204, 4.317, 4.458, 4.678 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=04h -> TAP3 */
+			   when : "(SEL4[3]' * SEL4[2] * SEL4[1]' * SEL4[0]')"; 
+               sdf_cond : "(~SEL4[3] * SEL4[2] * ~SEL4[1] * ~SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "5.134, 5.215, 5.327, 5.527 ",\
+					 "5.169, 5.252, 5.370, 5.556 ",\
+					 "5.174, 5.257, 5.375, 5.561 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.135, 5.241, 5.384, 5.612 ",\
+					 "5.305, 5.408, 5.554, 5.788 ",\
+					 "5.364, 5.472, 5.617, 5.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=05h -> TAP4 */
+			   when : "(SEL4[3]' * SEL4[2] * SEL4[1]' * SEL4[0])"; 
+               sdf_cond : "(~SEL4[3] * SEL4[2] * ~SEL4[1] * SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "6.273, 6.352, 6.478, 6.680 ",\
+					 "6.297, 6.379, 6.502, 6.701 ",\
+					 "6.302, 6.384, 6.507, 6.706 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.916, 6.025, 6.177, 6.401 ",\
+					 "6.091, 6.198, 6.345, 6.577 ",\
+					 "6.145, 6.258, 6.409, 6.633 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=06h -> TAP5 */
+			   when : "(SEL4[3]' * SEL4[2] * SEL4[1] * SEL4[0]')"; 
+               sdf_cond : "(~SEL4[3] * SEL4[2] * SEL4[1] * ~SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "7.082, 7.165, 7.290, 7.493 ",\
+					 "7.117, 7.197, 7.319, 7.520 ",\
+					 "7.123, 7.202, 7.324, 7.525 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.062, 7.173, 7.323, 7.560 ",\
+					 "7.241, 7.347, 7.496, 7.737 ",\
+					 "7.296, 7.410, 7.561, 7.794 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=07h -> TAP6 */
+			   when : "(SEL4[3]' * SEL4[2] * SEL4[1] * SEL4[0])"; 
+               sdf_cond : "(~SEL4[3] * SEL4[2] * SEL4[1] * SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "8.211, 8.294, 8.421, 8.638 ",\
+					 "8.248, 8.337, 8.460, 8.669 ",\
+					 "8.253, 8.342, 8.465, 8.674 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.860, 7.974, 8.125, 8.360 ",\
+					 "8.038, 8.146, 8.296, 8.537 ",\
+					 "8.091, 8.205, 8.354, 8.588 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=08h -> TAP7 */
+			   when : "(SEL4[3] * SEL4[2]' * SEL4[1]' * SEL4[0]')"; 
+               sdf_cond : "(SEL4[3] * ~SEL4[2] * ~SEL4[1] * ~SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "9.032, 9.117, 9.245, 9.456 ",\
+					 "9.063, 9.148, 9.272, 9.478 ",\
+					 "9.068, 9.153, 9.277, 9.483 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.005, 9.120, 9.272, 9.517 ",\
+					 "9.189, 9.297, 9.449, 9.698 ",\
+					 "9.244, 9.356, 9.511, 9.748 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=09h -> TAP8 */
+			   when : "(SEL4[3] * SEL4[2]' * SEL4[1]' * SEL4[0])"; 
+               sdf_cond : "(SEL4[3] * ~SEL4[2] * ~SEL4[1] * SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.151, 10.246, 10.381, 10.598 ",\
+					 "10.194, 10.276, 10.406, 10.618 ",\
+					 "10.199, 10.281, 10.411, 10.623 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.796, 9.908, 10.060, 10.304 ",\
+					 "9.975, 10.086, 10.239, 10.487 ",\
+					 "10.030, 10.148, 10.298, 10.533 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=0Ah -> TAP9 */
+			   when : "(SEL4[3] * SEL4[2]' * SEL4[1] * SEL4[0]')"; 
+               sdf_cond : "(SEL4[3] * ~SEL4[2] * SEL4[1] * ~SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.979, 11.071, 11.204, 11.421 ",\
+					 "11.009, 11.098, 11.228, 11.447 ",\
+					 "11.014, 11.103, 11.233, 11.452 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "10.947, 11.066, 11.223, 11.471 ",\
+					 "11.134, 11.244, 11.399, 11.651 ",\
+					 "11.189, 11.307, 11.465, 11.714 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL4[3:0]=0Bh -> TAP10 */
+			   when : "(SEL4[3] * SEL4[2]' * SEL4[1] * SEL4[0])"; 
+               sdf_cond : "(SEL4[3] * ~SEL4[2] * SEL4[1] * SEL4[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "12.111, 12.202, 12.336, 12.565 ",\
+					 "12.149, 12.240, 12.373, 12.593 ",\
+					 "12.154, 12.245, 12.378, 12.598 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "11.750, 11.865, 12.021, 12.265 ",\
+					 "11.930, 12.043, 12.199, 12.452 ",\
+					 "11.987, 12.106, 12.265, 12.507 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+         } 
+         pin(clk[3]) {
+            direction : output; 
+            max_transition : 5;
+            max_capacitance : 0.450;
+		    related_power_pin : vpwri;
+		    related_ground_pin : vgnd;
+            timing() { /* SEL3[3:0]=01h -> TAP0 */
+			   when : "(SEL3[3]' * SEL3[2]' * SEL3[1]' * SEL3[0])"; 
+               sdf_cond : "(~SEL3[3] * ~SEL3[2] * ~SEL3[1] * SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "2.390, 2.460, 2.574, 2.763 ",\
+					 "2.433, 2.500, 2.613, 2.803 ",\
+					 "2.438, 2.505, 2.618, 2.808 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "2.163, 2.263, 2.398, 2.614 ",\
+					 "2.337, 2.434, 2.573, 2.790 ",\
+					 "2.388, 2.492, 2.628, 2.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=02h -> TAP1 */
+			   when : "(SEL3[3]' * SEL3[2]' * SEL3[1] * SEL3[0]')"; 
+               sdf_cond : "(~SEL3[3] * ~SEL3[2] * SEL3[1] * ~SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "3.191, 3.273, 3.387, 3.577 ",\
+					 "3.228, 3.312, 3.423, 3.611 ",\
+					 "3.233, 3.317, 3.428, 3.616 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.195, 3.303, 3.441, 3.661 ",\
+					 "3.366, 3.468, 3.607, 3.836 ",\
+					 "3.419, 3.530, 3.671, 3.890 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=03h -> TAP2 */
+			   when : "(SEL3[3]' * SEL3[2]' * SEL3[1] * SEL3[0])"; 
+               sdf_cond : "(~SEL3[3] * ~SEL3[2] * SEL3[1] * SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "4.320, 4.393, 4.513, 4.711 ",\
+					 "4.350, 4.428, 4.546, 4.742 ",\
+					 "4.358, 4.433, 4.551, 4.747 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.975, 4.078, 4.225, 4.443 ",\
+					 "4.151, 4.254, 4.394, 4.617 ",\
+					 "4.204, 4.317, 4.458, 4.678 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=04h -> TAP3 */
+			   when : "(SEL3[3]' * SEL3[2] * SEL3[1]' * SEL3[0]')"; 
+               sdf_cond : "(~SEL3[3] * SEL3[2] * ~SEL3[1] * ~SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "5.134, 5.215, 5.327, 5.527 ",\
+					 "5.169, 5.252, 5.370, 5.556 ",\
+					 "5.174, 5.257, 5.375, 5.561 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.135, 5.241, 5.384, 5.612 ",\
+					 "5.305, 5.408, 5.554, 5.788 ",\
+					 "5.364, 5.472, 5.617, 5.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=05h -> TAP4 */
+			   when : "(SEL3[3]' * SEL3[2] * SEL3[1]' * SEL3[0])"; 
+               sdf_cond : "(~SEL3[3] * SEL3[2] * ~SEL3[1] * SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "6.273, 6.352, 6.478, 6.680 ",\
+					 "6.297, 6.379, 6.502, 6.701 ",\
+					 "6.302, 6.384, 6.507, 6.706 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.916, 6.025, 6.177, 6.401 ",\
+					 "6.091, 6.198, 6.345, 6.577 ",\
+					 "6.145, 6.258, 6.409, 6.633 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=06h -> TAP5 */
+			   when : "(SEL3[3]' * SEL3[2] * SEL3[1] * SEL3[0]')"; 
+               sdf_cond : "(~SEL3[3] * SEL3[2] * SEL3[1] * ~SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "7.082, 7.165, 7.290, 7.493 ",\
+					 "7.117, 7.197, 7.319, 7.520 ",\
+					 "7.123, 7.202, 7.324, 7.525 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.062, 7.173, 7.323, 7.560 ",\
+					 "7.241, 7.347, 7.496, 7.737 ",\
+					 "7.296, 7.410, 7.561, 7.794 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=07h -> TAP6 */
+			   when : "(SEL3[3]' * SEL3[2] * SEL3[1] * SEL3[0])"; 
+               sdf_cond : "(~SEL3[3] * SEL3[2] * SEL3[1] * SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "8.211, 8.294, 8.421, 8.638 ",\
+					 "8.248, 8.337, 8.460, 8.669 ",\
+					 "8.253, 8.342, 8.465, 8.674 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.860, 7.974, 8.125, 8.360 ",\
+					 "8.038, 8.146, 8.296, 8.537 ",\
+					 "8.091, 8.205, 8.354, 8.588 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=08h -> TAP7 */
+			   when : "(SEL3[3] * SEL3[2]' * SEL3[1]' * SEL3[0]')"; 
+               sdf_cond : "(SEL3[3] * ~SEL3[2] * ~SEL3[1] * ~SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "9.032, 9.117, 9.245, 9.456 ",\
+					 "9.063, 9.148, 9.272, 9.478 ",\
+					 "9.068, 9.153, 9.277, 9.483 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.005, 9.120, 9.272, 9.517 ",\
+					 "9.189, 9.297, 9.449, 9.698 ",\
+					 "9.244, 9.356, 9.511, 9.748 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=09h -> TAP8 */
+			   when : "(SEL3[3] * SEL3[2]' * SEL3[1]' * SEL3[0])"; 
+               sdf_cond : "(SEL3[3] * ~SEL3[2] * ~SEL3[1] * SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.151, 10.246, 10.381, 10.598 ",\
+					 "10.194, 10.276, 10.406, 10.618 ",\
+					 "10.199, 10.281, 10.411, 10.623 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.796, 9.908, 10.060, 10.304 ",\
+					 "9.975, 10.086, 10.239, 10.487 ",\
+					 "10.030, 10.148, 10.298, 10.533 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=0Ah -> TAP9 */
+			   when : "(SEL3[3] * SEL3[2]' * SEL3[1] * SEL3[0]')"; 
+               sdf_cond : "(SEL3[3] * ~SEL3[2] * SEL3[1] * ~SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.979, 11.071, 11.204, 11.421 ",\
+					 "11.009, 11.098, 11.228, 11.447 ",\
+					 "11.014, 11.103, 11.233, 11.452 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "10.947, 11.066, 11.223, 11.471 ",\
+					 "11.134, 11.244, 11.399, 11.651 ",\
+					 "11.189, 11.307, 11.465, 11.714 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL3[3:0]=0Bh -> TAP10 */
+			   when : "(SEL3[3] * SEL3[2]' * SEL3[1] * SEL3[0])"; 
+               sdf_cond : "(SEL3[3] * ~SEL3[2] * SEL3[1] * SEL3[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "12.111, 12.202, 12.336, 12.565 ",\
+					 "12.149, 12.240, 12.373, 12.593 ",\
+					 "12.154, 12.245, 12.378, 12.598 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "11.750, 11.865, 12.021, 12.265 ",\
+					 "11.930, 12.043, 12.199, 12.452 ",\
+					 "11.987, 12.106, 12.265, 12.507 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+         } 
+         pin(clk[2]) {
+            direction : output; 
+            max_transition : 5;
+            max_capacitance : 0.450;
+		    related_power_pin : vpwri;
+		    related_ground_pin : vgnd;
+            timing() { /* SEL2[3:0]=01h -> TAP0 */
+			   when : "(SEL2[3]' * SEL2[2]' * SEL2[1]' * SEL2[0])"; 
+               sdf_cond : "(~SEL2[3] * ~SEL2[2] * ~SEL2[1] * SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "2.390, 2.460, 2.574, 2.763 ",\
+					 "2.433, 2.500, 2.613, 2.803 ",\
+					 "2.438, 2.505, 2.618, 2.808 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "2.163, 2.263, 2.398, 2.614 ",\
+					 "2.337, 2.434, 2.573, 2.790 ",\
+					 "2.388, 2.492, 2.628, 2.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=02h -> TAP1 */
+			   when : "(SEL2[3]' * SEL2[2]' * SEL2[1] * SEL2[0]')"; 
+               sdf_cond : "(~SEL2[3] * ~SEL2[2] * SEL2[1] * ~SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "3.191, 3.273, 3.387, 3.577 ",\
+					 "3.228, 3.312, 3.423, 3.611 ",\
+					 "3.233, 3.317, 3.428, 3.616 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.195, 3.303, 3.441, 3.661 ",\
+					 "3.366, 3.468, 3.607, 3.836 ",\
+					 "3.419, 3.530, 3.671, 3.890 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=03h -> TAP2 */
+			   when : "(SEL2[3]' * SEL2[2]' * SEL2[1] * SEL2[0])"; 
+               sdf_cond : "(~SEL2[3] * ~SEL2[2] * SEL2[1] * SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "4.320, 4.393, 4.513, 4.711 ",\
+					 "4.350, 4.428, 4.546, 4.742 ",\
+					 "4.358, 4.433, 4.551, 4.747 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.975, 4.078, 4.225, 4.443 ",\
+					 "4.151, 4.254, 4.394, 4.617 ",\
+					 "4.204, 4.317, 4.458, 4.678 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=04h -> TAP3 */
+			   when : "(SEL2[3]' * SEL2[2] * SEL2[1]' * SEL2[0]')"; 
+               sdf_cond : "(~SEL2[3] * SEL2[2] * ~SEL2[1] * ~SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "5.134, 5.215, 5.327, 5.527 ",\
+					 "5.169, 5.252, 5.370, 5.556 ",\
+					 "5.174, 5.257, 5.375, 5.561 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.135, 5.241, 5.384, 5.612 ",\
+					 "5.305, 5.408, 5.554, 5.788 ",\
+					 "5.364, 5.472, 5.617, 5.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=05h -> TAP4 */
+			   when : "(SEL2[3]' * SEL2[2] * SEL2[1]' * SEL2[0])"; 
+               sdf_cond : "(~SEL2[3] * SEL2[2] * ~SEL2[1] * SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "6.273, 6.352, 6.478, 6.680 ",\
+					 "6.297, 6.379, 6.502, 6.701 ",\
+					 "6.302, 6.384, 6.507, 6.706 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.916, 6.025, 6.177, 6.401 ",\
+					 "6.091, 6.198, 6.345, 6.577 ",\
+					 "6.145, 6.258, 6.409, 6.633 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=06h -> TAP5 */
+			   when : "(SEL2[3]' * SEL2[2] * SEL2[1] * SEL2[0]')"; 
+               sdf_cond : "(~SEL2[3] * SEL2[2] * SEL2[1] * ~SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "7.082, 7.165, 7.290, 7.493 ",\
+					 "7.117, 7.197, 7.319, 7.520 ",\
+					 "7.123, 7.202, 7.324, 7.525 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.062, 7.173, 7.323, 7.560 ",\
+					 "7.241, 7.347, 7.496, 7.737 ",\
+					 "7.296, 7.410, 7.561, 7.794 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=07h -> TAP6 */
+			   when : "(SEL2[3]' * SEL2[2] * SEL2[1] * SEL2[0])"; 
+               sdf_cond : "(~SEL2[3] * SEL2[2] * SEL2[1] * SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "8.211, 8.294, 8.421, 8.638 ",\
+					 "8.248, 8.337, 8.460, 8.669 ",\
+					 "8.253, 8.342, 8.465, 8.674 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.860, 7.974, 8.125, 8.360 ",\
+					 "8.038, 8.146, 8.296, 8.537 ",\
+					 "8.091, 8.205, 8.354, 8.588 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=08h -> TAP7 */
+			   when : "(SEL2[3] * SEL2[2]' * SEL2[1]' * SEL2[0]')"; 
+               sdf_cond : "(SEL2[3] * ~SEL2[2] * ~SEL2[1] * ~SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "9.032, 9.117, 9.245, 9.456 ",\
+					 "9.063, 9.148, 9.272, 9.478 ",\
+					 "9.068, 9.153, 9.277, 9.483 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.005, 9.120, 9.272, 9.517 ",\
+					 "9.189, 9.297, 9.449, 9.698 ",\
+					 "9.244, 9.356, 9.511, 9.748 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=09h -> TAP8 */
+			   when : "(SEL2[3] * SEL2[2]' * SEL2[1]' * SEL2[0])"; 
+               sdf_cond : "(SEL2[3] * ~SEL2[2] * ~SEL2[1] * SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.151, 10.246, 10.381, 10.598 ",\
+					 "10.194, 10.276, 10.406, 10.618 ",\
+					 "10.199, 10.281, 10.411, 10.623 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.796, 9.908, 10.060, 10.304 ",\
+					 "9.975, 10.086, 10.239, 10.487 ",\
+					 "10.030, 10.148, 10.298, 10.533 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=0Ah -> TAP9 */
+			   when : "(SEL2[3] * SEL2[2]' * SEL2[1] * SEL2[0]')"; 
+               sdf_cond : "(SEL2[3] * ~SEL2[2] * SEL2[1] * ~SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.979, 11.071, 11.204, 11.421 ",\
+					 "11.009, 11.098, 11.228, 11.447 ",\
+					 "11.014, 11.103, 11.233, 11.452 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "10.947, 11.066, 11.223, 11.471 ",\
+					 "11.134, 11.244, 11.399, 11.651 ",\
+					 "11.189, 11.307, 11.465, 11.714 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL2[3:0]=0Bh -> TAP10 */
+			   when : "(SEL2[3] * SEL2[2]' * SEL2[1] * SEL2[0])"; 
+               sdf_cond : "(SEL2[3] * ~SEL2[2] * SEL2[1] * SEL2[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "12.111, 12.202, 12.336, 12.565 ",\
+					 "12.149, 12.240, 12.373, 12.593 ",\
+					 "12.154, 12.245, 12.378, 12.598 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "11.750, 11.865, 12.021, 12.265 ",\
+					 "11.930, 12.043, 12.199, 12.452 ",\
+					 "11.987, 12.106, 12.265, 12.507 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+         } 
+         pin(clk[1]) {
+            direction : output; 
+            max_transition : 5;
+            max_capacitance : 0.450;
+		    related_power_pin : vpwri;
+		    related_ground_pin : vgnd;
+            timing() { /* SEL1[3:0]=01h -> TAP0 */
+			   when : "(SEL1[3]' * SEL1[2]' * SEL1[1]' * SEL1[0])"; 
+               sdf_cond : "(~SEL1[3] * ~SEL1[2] * ~SEL1[1] * SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "2.390, 2.460, 2.574, 2.763 ",\
+					 "2.433, 2.500, 2.613, 2.803 ",\
+					 "2.438, 2.505, 2.618, 2.808 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "2.163, 2.263, 2.398, 2.614 ",\
+					 "2.337, 2.434, 2.573, 2.790 ",\
+					 "2.388, 2.492, 2.628, 2.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=02h -> TAP1 */
+			   when : "(SEL1[3]' * SEL1[2]' * SEL1[1] * SEL1[0]')"; 
+               sdf_cond : "(~SEL1[3] * ~SEL1[2] * SEL1[1] * ~SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "3.191, 3.273, 3.387, 3.577 ",\
+					 "3.228, 3.312, 3.423, 3.611 ",\
+					 "3.233, 3.317, 3.428, 3.616 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.195, 3.303, 3.441, 3.661 ",\
+					 "3.366, 3.468, 3.607, 3.836 ",\
+					 "3.419, 3.530, 3.671, 3.890 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=03h -> TAP2 */
+			   when : "(SEL1[3]' * SEL1[2]' * SEL1[1] * SEL1[0])"; 
+               sdf_cond : "(~SEL1[3] * ~SEL1[2] * SEL1[1] * SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "4.320, 4.393, 4.513, 4.711 ",\
+					 "4.350, 4.428, 4.546, 4.742 ",\
+					 "4.358, 4.433, 4.551, 4.747 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.975, 4.078, 4.225, 4.443 ",\
+					 "4.151, 4.254, 4.394, 4.617 ",\
+					 "4.204, 4.317, 4.458, 4.678 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=04h -> TAP3 */
+			   when : "(SEL1[3]' * SEL1[2] * SEL1[1]' * SEL1[0]')"; 
+               sdf_cond : "(~SEL1[3] * SEL1[2] * ~SEL1[1] * ~SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "5.134, 5.215, 5.327, 5.527 ",\
+					 "5.169, 5.252, 5.370, 5.556 ",\
+					 "5.174, 5.257, 5.375, 5.561 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.135, 5.241, 5.384, 5.612 ",\
+					 "5.305, 5.408, 5.554, 5.788 ",\
+					 "5.364, 5.472, 5.617, 5.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=05h -> TAP4 */
+			   when : "(SEL1[3]' * SEL1[2] * SEL1[1]' * SEL1[0])"; 
+               sdf_cond : "(~SEL1[3] * SEL1[2] * ~SEL1[1] * SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "6.273, 6.352, 6.478, 6.680 ",\
+					 "6.297, 6.379, 6.502, 6.701 ",\
+					 "6.302, 6.384, 6.507, 6.706 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.916, 6.025, 6.177, 6.401 ",\
+					 "6.091, 6.198, 6.345, 6.577 ",\
+					 "6.145, 6.258, 6.409, 6.633 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=06h -> TAP5 */
+			   when : "(SEL1[3]' * SEL1[2] * SEL1[1] * SEL1[0]')"; 
+               sdf_cond : "(~SEL1[3] * SEL1[2] * SEL1[1] * ~SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "7.082, 7.165, 7.290, 7.493 ",\
+					 "7.117, 7.197, 7.319, 7.520 ",\
+					 "7.123, 7.202, 7.324, 7.525 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.062, 7.173, 7.323, 7.560 ",\
+					 "7.241, 7.347, 7.496, 7.737 ",\
+					 "7.296, 7.410, 7.561, 7.794 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=07h -> TAP6 */
+			   when : "(SEL1[3]' * SEL1[2] * SEL1[1] * SEL1[0])"; 
+               sdf_cond : "(~SEL1[3] * SEL1[2] * SEL1[1] * SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "8.211, 8.294, 8.421, 8.638 ",\
+					 "8.248, 8.337, 8.460, 8.669 ",\
+					 "8.253, 8.342, 8.465, 8.674 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.860, 7.974, 8.125, 8.360 ",\
+					 "8.038, 8.146, 8.296, 8.537 ",\
+					 "8.091, 8.205, 8.354, 8.588 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=08h -> TAP7 */
+			   when : "(SEL1[3] * SEL1[2]' * SEL1[1]' * SEL1[0]')"; 
+               sdf_cond : "(SEL1[3] * ~SEL1[2] * ~SEL1[1] * ~SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "9.032, 9.117, 9.245, 9.456 ",\
+					 "9.063, 9.148, 9.272, 9.478 ",\
+					 "9.068, 9.153, 9.277, 9.483 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.005, 9.120, 9.272, 9.517 ",\
+					 "9.189, 9.297, 9.449, 9.698 ",\
+					 "9.244, 9.356, 9.511, 9.748 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=09h -> TAP8 */
+			   when : "(SEL1[3] * SEL1[2]' * SEL1[1]' * SEL1[0])"; 
+               sdf_cond : "(SEL1[3] * ~SEL1[2] * ~SEL1[1] * SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.151, 10.246, 10.381, 10.598 ",\
+					 "10.194, 10.276, 10.406, 10.618 ",\
+					 "10.199, 10.281, 10.411, 10.623 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.796, 9.908, 10.060, 10.304 ",\
+					 "9.975, 10.086, 10.239, 10.487 ",\
+					 "10.030, 10.148, 10.298, 10.533 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=0Ah -> TAP9 */
+			   when : "(SEL1[3] * SEL1[2]' * SEL1[1] * SEL1[0]')"; 
+               sdf_cond : "(SEL1[3] * ~SEL1[2] * SEL1[1] * ~SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.979, 11.071, 11.204, 11.421 ",\
+					 "11.009, 11.098, 11.228, 11.447 ",\
+					 "11.014, 11.103, 11.233, 11.452 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "10.947, 11.066, 11.223, 11.471 ",\
+					 "11.134, 11.244, 11.399, 11.651 ",\
+					 "11.189, 11.307, 11.465, 11.714 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL1[3:0]=0Bh -> TAP10 */
+			   when : "(SEL1[3] * SEL1[2]' * SEL1[1] * SEL1[0])"; 
+               sdf_cond : "(SEL1[3] * ~SEL1[2] * SEL1[1] * SEL1[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "12.111, 12.202, 12.336, 12.565 ",\
+					 "12.149, 12.240, 12.373, 12.593 ",\
+					 "12.154, 12.245, 12.378, 12.598 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "11.750, 11.865, 12.021, 12.265 ",\
+					 "11.930, 12.043, 12.199, 12.452 ",\
+					 "11.987, 12.106, 12.265, 12.507 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+         } 
+         pin(clk[0]) {
+            direction : output; 
+            max_transition : 5;
+            max_capacitance : 0.450;
+		    related_power_pin : vpwri;
+		    related_ground_pin : vgnd;
+            timing() { /* clksel=0 IMO -> TAP0 */
+			   when : "(clksel')"; 
+               sdf_cond : "(~clksel)";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "0.168, 0.234, 0.341, 0.521 ",\
+				     "0.247, 0.314, 0.421, 0.600 ",\
+				     "0.254, 0.320, 0.428, 0.606 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.131, 0.272, 0.524");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "0.277, 0.377, 0.508, 0.720 ",\
+				     "0.488, 0.581, 0.714, 0.927 ",\
+				     "0.556, 0.654, 0.787, 1.003 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.063, 0.154, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=01h -> TAP0 */
+			   when : "(clksel * SEL0[3]' * SEL0[2]' * SEL0[1]' * SEL0[0])"; 
+               sdf_cond : "(clksel * ~SEL0[3] * ~SEL0[2] * ~SEL0[1] * SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "2.390, 2.460, 2.574, 2.763 ",\
+					 "2.433, 2.500, 2.613, 2.803 ",\
+					 "2.438, 2.505, 2.618, 2.808 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "2.163, 2.263, 2.398, 2.614 ",\
+					 "2.337, 2.434, 2.573, 2.790 ",\
+					 "2.388, 2.492, 2.628, 2.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=02h -> TAP1 */
+			   when : "(clksel * SEL0[3]' * SEL0[2]' * SEL0[1] * SEL0[0]')"; 
+               sdf_cond : "(clksel * ~SEL0[3] * ~SEL0[2] * SEL0[1] * ~SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "3.191, 3.273, 3.387, 3.577 ",\
+					 "3.228, 3.312, 3.423, 3.611 ",\
+					 "3.233, 3.317, 3.428, 3.616 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.195, 3.303, 3.441, 3.661 ",\
+					 "3.366, 3.468, 3.607, 3.836 ",\
+					 "3.419, 3.530, 3.671, 3.890 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=03h -> TAP2 */
+			   when : "(clksel * SEL0[3]' * SEL0[2]' * SEL0[1] * SEL0[0])"; 
+               sdf_cond : "(clksel * ~SEL0[3] * ~SEL0[2] * SEL0[1] * SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "4.320, 4.393, 4.513, 4.711 ",\
+					 "4.350, 4.428, 4.546, 4.742 ",\
+					 "4.358, 4.433, 4.551, 4.747 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "3.975, 4.078, 4.225, 4.443 ",\
+					 "4.151, 4.254, 4.394, 4.617 ",\
+					 "4.204, 4.317, 4.458, 4.678 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=04h -> TAP3 */
+			   when : "(clksel * SEL0[3]' * SEL0[2] * SEL0[1]' * SEL0[0]')"; 
+               sdf_cond : "(clksel * ~SEL0[3] * SEL0[2] * ~SEL0[1] * ~SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "5.134, 5.215, 5.327, 5.527 ",\
+					 "5.169, 5.252, 5.370, 5.556 ",\
+					 "5.174, 5.257, 5.375, 5.561 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.135, 5.241, 5.384, 5.612 ",\
+					 "5.305, 5.408, 5.554, 5.788 ",\
+					 "5.364, 5.472, 5.617, 5.840 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=05h -> TAP4 */
+			   when : "(clksel * SEL0[3]' * SEL0[2] * SEL0[1]' * SEL0[0])"; 
+               sdf_cond : "(clksel * ~SEL0[3] * SEL0[2] * ~SEL0[1] * SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "6.273, 6.352, 6.478, 6.680 ",\
+					 "6.297, 6.379, 6.502, 6.701 ",\
+					 "6.302, 6.384, 6.507, 6.706 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "5.916, 6.025, 6.177, 6.401 ",\
+					 "6.091, 6.198, 6.345, 6.577 ",\
+					 "6.145, 6.258, 6.409, 6.633 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=06h -> TAP5 */
+			   when : "(clksel * SEL0[3]' * SEL0[2] * SEL0[1] * SEL0[0]')"; 
+               sdf_cond : "(clksel * ~SEL0[3] * SEL0[2] * SEL0[1] * ~SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "7.082, 7.165, 7.290, 7.493 ",\
+					 "7.117, 7.197, 7.319, 7.520 ",\
+					 "7.123, 7.202, 7.324, 7.525 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.062, 7.173, 7.323, 7.560 ",\
+					 "7.241, 7.347, 7.496, 7.737 ",\
+					 "7.296, 7.410, 7.561, 7.794 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=07h -> TAP6 */
+			   when : "(clksel * SEL0[3]' * SEL0[2] * SEL0[1] * SEL0[0])"; 
+               sdf_cond : "(clksel * ~SEL0[3] * SEL0[2] * SEL0[1] * SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "8.211, 8.294, 8.421, 8.638 ",\
+					 "8.248, 8.337, 8.460, 8.669 ",\
+					 "8.253, 8.342, 8.465, 8.674 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "7.860, 7.974, 8.125, 8.360 ",\
+					 "8.038, 8.146, 8.296, 8.537 ",\
+					 "8.091, 8.205, 8.354, 8.588 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=08h -> TAP7 */
+			   when : "(clksel * SEL0[3] * SEL0[2]' * SEL0[1]' * SEL0[0]')"; 
+               sdf_cond : "(clksel * SEL0[3] * ~SEL0[2] * ~SEL0[1] * ~SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "9.032, 9.117, 9.245, 9.456 ",\
+					 "9.063, 9.148, 9.272, 9.478 ",\
+					 "9.068, 9.153, 9.277, 9.483 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.005, 9.120, 9.272, 9.517 ",\
+					 "9.189, 9.297, 9.449, 9.698 ",\
+					 "9.244, 9.356, 9.511, 9.748 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=09h -> TAP8 */
+			   when : "(clksel * SEL0[3] * SEL0[2]' * SEL0[1]' * SEL0[0])"; 
+               sdf_cond : "(clksel * SEL0[3] * ~SEL0[2] * ~SEL0[1] * SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.151, 10.246, 10.381, 10.598 ",\
+					 "10.194, 10.276, 10.406, 10.618 ",\
+					 "10.199, 10.281, 10.411, 10.623 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "9.796, 9.908, 10.060, 10.304 ",\
+					 "9.975, 10.086, 10.239, 10.487 ",\
+					 "10.030, 10.148, 10.298, 10.533 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=0Ah -> TAP9 */
+			   when : "(clksel * SEL0[3] * SEL0[2]' * SEL0[1] * SEL0[0]')"; 
+               sdf_cond : "(clksel * SEL0[3] * ~SEL0[2] * SEL0[1] * ~SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "10.979, 11.071, 11.204, 11.421 ",\
+					 "11.009, 11.098, 11.228, 11.447 ",\
+					 "11.014, 11.103, 11.233, 11.452 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "10.947, 11.066, 11.223, 11.471 ",\
+					 "11.134, 11.244, 11.399, 11.651 ",\
+					 "11.189, 11.307, 11.465, 11.714 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+            timing() { /* SEL0[3:0]=0Bh -> TAP10 */
+			   when : "(clksel * SEL0[3] * SEL0[2]' * SEL0[1] * SEL0[0])"; 
+               sdf_cond : "(clksel * SEL0[3] * ~SEL0[2] * SEL0[1] * SEL0[0])";
+               timing_sense : positive_unate;
+               cell_rise(clk_delay_3x4) { 
+                  values ( \
+				     "12.111, 12.202, 12.336, 12.565 ",\
+					 "12.149, 12.240, 12.373, 12.593 ",\
+					 "12.154, 12.245, 12.378, 12.598 ");
+               } 
+               rise_transition(clk_transition_1x4) { 
+                  values ("0.051, 0.136, 0.272, 0.526");
+               }
+               cell_fall(clk_delay_3x4) { 
+                  values ( \
+				     "11.750, 11.865, 12.021, 12.265 ",\
+					 "11.930, 12.043, 12.199, 12.452 ",\
+					 "11.987, 12.106, 12.265, 12.507 ");
+               } 
+               fall_transition(clk_transition_1x4) { 
+                  values ("0.060, 0.153, 0.317, 0.582");
+               }
+               related_pin : "clkin";
+            }
+         } 
+      } 
+   }
+}
+
