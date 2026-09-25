@@ -2,7 +2,7 @@
 
 > 5-tap clock delay line
 
-Draft for designer review. The public GDS is an abstract; ChipFoundry
+The public GDS is an abstract; ChipFoundry
 substitutes protected full geometry at tapeout.
 
 This package ships an SRAM-style PG wrap `CF_CLK_DLY5` around analog leaf
@@ -29,14 +29,7 @@ Well taps `vpb` / `vnb` are tied inside the wrap.
 
 ```bash
 pip install cf-ipm
-ipm install CF_CLK_DLY5 --version 0.2.1 --include-drafts
-```
-
-Until the marketplace listing is published, install from a local catalog
-override the same way `cf-clk-dly5-test-project` does:
-
-```bash
-ipm install CF_CLK_DLY5 --version 0.2.1 --include-drafts --local-file ip/catalog.json
+ipm install CF_CLK_DLY5 --version 0.2.2
 ```
 
 Use `hdl/gl/CF_CLK_DLY5.v` as the customer blackbox, `layout/lef/CF_CLK_DLY5.lef`
@@ -129,6 +122,7 @@ This ChipFoundry SkyWater 130 nm package delivers an abstract for
 integration. ChipFoundry substitutes protected full layout at tapeout.
 0.2.1 adds core `cmm1`/`cmm2` waffleDrop so fillgen does not overwrite
 analog. LI fill-block remains `li1.blockage` 67/10.
+0.2.2 publishes that wrap.
 The chipIgnite delivery of this package is not marked shuttle-proven until
 a run returns.
 
